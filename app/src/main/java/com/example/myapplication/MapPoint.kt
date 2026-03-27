@@ -3,10 +3,6 @@ package com.example.myapplication
 data class MapPoint(val row : Int,
                     val col : Int
 ) {
-
-//    fun first(path : List<MapPoint>) : MapPoint {
-//        return path[0]
-//    }
 }
 
 

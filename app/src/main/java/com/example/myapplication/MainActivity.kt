@@ -10,32 +10,50 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.Path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import kotlin.math.PI
 
 
-const val TILESIZE : Int = 20 //TODO: сделать в пикселях?
+//val TILESIZE = size.width/300f //TODO: сделать в пикселях?
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,12 +61,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
+                var imageWidth by remember  { mutableFloatStateOf(0f) }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column() {
+                        //modifier = Modifier
                         MapView(
                             modifier = Modifier
                                 .padding(innerPadding)
-                                .size(1000.dp, 1000.dp))
+                                .fillMaxSize()) //.size(1000.dp, 1000.dp))
                     }
                 }
             }
@@ -58,39 +78,83 @@ class MainActivity : ComponentActivity() {
 
 //@Preview
 @Composable
-fun MapView(modifier: Modifier = Modifier,
-            path : List<MapPoint> = remember { mutableStateListOf<MapPoint>().apply {
-                    val result = findMyPath()
-                    addAll(result)
-                }
-            }
-) {
+fun MapView(modifier: Modifier = Modifier) {
+    //создание индивидуального painter, чтобы при добавлении нового фото не было ошибок при обращении к разным painter со своими именами
+    val painterMap = painterResource(R.drawable.tsu_map)
+
+    val mapWidth = painterMap.intrinsicSize.width //ширина оригинальной карты не визуальной части, которую видим
+    val TILESIZE = mapWidth/300f //сторона квадратика у размера  оригинальной карты
+
+    //создание отслеживающего списка координат пути
+    var path by remember {mutableStateOf<List<MapPoint>>(emptyList())}
+    path = findMyPath()
+
+    //var imageWidth by remember {mutableFloatStateOf(0f)}
+    //val TILESIZE = imageWidth / 300f
+
+    //создание отслеживающих переменных который будут показывать смещенение и зум и вращение
+    var offsetX by remember {mutableStateOf(0f)}
+    var offsetY by remember {mutableStateOf(0f)}
+    var zoom by remember {mutableStateOf(1.2f)}
+    var rotationAngle by remember {mutableStateOf(0f)}
+
+    //создание отслеживающих переменных которые будут показывать координаты последнего нажатия на
+    // видимой части карты (видимой на телефоне в данный момент), т.е координаты отн-но не начала карты
+    // а начала которую может видеть пользователь(по простому левый верхний экран - точка начало 0px,0px)
+    var lastTapX by remember {mutableStateOf(0f)}
+    var lastTapY by remember {mutableStateOf(0f)}
+
+    var containerSize by remember { mutableStateOf(IntSize.Zero) }
     Image(
-        painter = painterResource(R.drawable.tsu_map),
+        painter = painterMap,//painterResource(R.drawable.tsu_map),
         contentDescription = "Карта",
         contentScale = ContentScale.Fit,
         modifier = modifier
-            .pointerInput(Unit) {
+            .horizontalScroll(rememberScrollState())
+            .fillMaxHeight()
+            .pointerInput(Unit) { //Tap
                 detectTapGestures(onTap = { offset ->
-                    val row = (offset.y / TILESIZE).toInt()
-                    val col = (offset.x / TILESIZE).toInt()
-                    onTileClicked(row, col)
+                    lastTapY = offset.y
+                    lastTapX = offset.x
+                    //onTileClicked(row, col)
                 })
             }
-            //создание холста
+            .pointerInput(Unit) { //Transform
+                detectTransformGestures { _, pan, gestureZoom, rotation ->
+
+                   //if (offsetX) // && (pan.x>1 || pan.y>1f)
+                   //    return@detectTransformGestures
+                    offsetX += pan.x
+                    offsetY += pan.y
+
+                    zoom *= gestureZoom
+                    rotationAngle += rotation
+                }
+            }
+            //создание модификатора, который будет отслеживать параметры скрола(сдвига по карте) и зума
+            .graphicsLayer {
+                translationX = offsetX
+                translationY = offsetY
+                scaleX = zoom
+                scaleY = zoom
+                rotationZ = rotationAngle
+
+                    //сделать позже: улучшение качество при приближении
+                    //renderEffect = RenderEffect.createBitmapFilterEffect(FilterQuality.High)
+            }
+                //создание холста
             .drawWithContent {
-                //для определения квадратиков для каждого размера телефона
-                val dynamicTileWidth = size.width / 300 // Всего 300 колонок
-                val dynamicTileHeight = size.height / 3600 // Всего 3600 строк
                 //создание непрерывной линии - пути
                 drawContent()
                 val myPath = Path().apply {
-                    val startX = path.first().row * dynamicTileWidth + dynamicTileWidth/2
-                    val startY = path.first().col * dynamicTileHeight + dynamicTileHeight/2
+                    val startX = path.first().row * TILESIZE + TILESIZE / 2
+                    val startY = path.first().col * TILESIZE + TILESIZE / 2
                     moveTo(startX.toFloat(), startY.toFloat())
-                    path.forEach{
-                        val X = it.row * dynamicTileWidth + dynamicTileWidth/2 //Половинка ячейки для того,
-                        val Y = it.col * dynamicTileHeight + dynamicTileHeight/2 // чтобы не выходить на другие ячейки - пути
+                    path.forEach {
+                        val X =
+                            it.row * TILESIZE + TILESIZE / 2 //Половинка ячейки для того,
+                        val Y =
+                            it.col * TILESIZE + TILESIZE / 2 // чтобы не выходить на другие ячейки - пути
                         lineTo(X.toFloat(), Y.toFloat()) // moveTo,lineTo - требуют float
                     }
                 }
@@ -98,7 +162,6 @@ fun MapView(modifier: Modifier = Modifier,
                     path = myPath,
                     color = Color.Green,
                     style = Stroke(width = 8f)
-
                 )
             }
     )
