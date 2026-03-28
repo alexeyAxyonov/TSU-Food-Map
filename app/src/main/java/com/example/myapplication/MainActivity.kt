@@ -51,6 +51,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import kotlin.math.PI
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 
 //val TILESIZE = size.width/300f //TODO: сделать в пикселях?
@@ -85,9 +91,20 @@ fun MapView(modifier: Modifier = Modifier) {
     val mapWidth = painterMap.intrinsicSize.width //ширина оригинальной карты не визуальной части, которую видим
     val TILESIZE = mapWidth/300f //сторона квадратика у размера  оригинальной карты
 
+    val context = LocalContext.current //чтобы читать файл mapmatrix.txt
+    val mapGrid = remember { MapGrid() }//чтобы потом вызывать findPath() для поиска пути
+    var isMapLoaded by remember { mutableStateOf(false) }//Переменная, которая запоминает, загрузилась ли матрица
+
+    LaunchedEffect(Unit) {//Загружаем матрицу из файла в фоне (не блокируя интерфейс)
+        mapGrid.loadMatrixFromFile(context)
+        isMapLoaded = true
+    }
+
+    var startPoint by remember { mutableStateOf<MapPoint?>(null) }// сохраняет значения между перерисовками экрана
+    var targetPoint by remember { mutableStateOf<MapPoint?>(null) }
+
     //создание отслеживающего списка координат пути
     var path by remember {mutableStateOf<List<MapPoint>>(emptyList())}
-    path = findMyPath()
 
     //var imageWidth by remember {mutableFloatStateOf(0f)}
     //val TILESIZE = imageWidth / 300f
@@ -112,24 +129,63 @@ fun MapView(modifier: Modifier = Modifier) {
         modifier = modifier
             .horizontalScroll(rememberScrollState())
             .fillMaxHeight()
-            .pointerInput(Unit) { //Tap
+            .pointerInput(Unit) {
                 detectTapGestures(onTap = { offset ->
                     lastTapY = offset.y
                     lastTapX = offset.x
-                    //onTileClicked(row, col)
+
+                    // Преобразуем координаты нажатия в координаты на оригинальной карте
+                    val originalX = (offset.x - offsetX) / zoom
+                    val originalY = (offset.y - offsetY) / zoom
+
+                    // Переводим в номера клеток
+                    val col = (originalX / TILESIZE).toInt()
+                    val row = (originalY / TILESIZE).toInt()
+
+                    // Проверяем, что координаты в пределах карты
+                    if (row in 0 until mapGrid.rows && col in 0 until mapGrid.cols) {
+                        // координаты корректны — обрабатываем
+                        when {
+                            startPoint == null -> {
+                                startPoint = MapPoint(row, col)// первый клик — старт
+                                Log.d("PathFinder", "Start point set: ($row, $col)")
+                            }
+
+                            targetPoint == null -> {
+                                targetPoint = MapPoint(row, col)// второй клик — цель
+                                Log.d("PathFinder", "Target point set: ($row, $col)")
+                                // Вызываем алгоритм поиска пути
+                                val result = mapGrid.findPath(
+                                    startRow = startPoint!!.row,
+                                    startCol = startPoint!!.col,
+                                    targetRow = targetPoint!!.row,
+                                    targetCol = targetPoint!!.col
+                                )
+
+                                if (result != null) {
+                                    // Преобразуем List<Cell> в List<MapPoint>
+                                    val newPath =
+                                        result.map { cell -> MapPoint(cell.row, cell.col) }
+                                    path = newPath
+                                    Log.d("PathFinder", "Path found! Size: ${newPath.size}")
+                                } else {
+                                    Log.d("PathFinder", "Path not found!")
+                                    path = emptyList()
+                                }
+                            }
+
+                            else -> {
+                                startPoint =
+                                    MapPoint(row, col)// третий клик — очищаем и начинаем заново
+                                targetPoint = null
+                                Log.d("PathFinder", "Reset: start point set to ($row, $col)")
+                            }
+                        }
+                    } else {
+                        // нажали за пределами карты
+                        Log.d("PathFinder", "Clicked outside map bounds: ($row, $col)")
+                    }
                 })
-            }
-            .pointerInput(Unit) { //Transform
-                detectTransformGestures { _, pan, gestureZoom, rotation ->
-
-                   //if (offsetX) // && (pan.x>1 || pan.y>1f)
-                   //    return@detectTransformGestures
-                    offsetX += pan.x
-                    offsetY += pan.y
-
-                    zoom *= gestureZoom
-                    rotationAngle += rotation
-                }
             }
             //создание модификатора, который будет отслеживать параметры скрола(сдвига по карте) и зума
             .graphicsLayer {
@@ -144,28 +200,27 @@ fun MapView(modifier: Modifier = Modifier) {
             }
                 //создание холста
             .drawWithContent {
-                //создание непрерывной линии - пути
                 drawContent()
-                val myPath = Path().apply {
-                    val startX = path.first().row * TILESIZE + TILESIZE / 2
-                    val startY = path.first().col * TILESIZE + TILESIZE / 2
-                    moveTo(startX.toFloat(), startY.toFloat())
-                    path.forEach {
-                        val X =
-                            it.row * TILESIZE + TILESIZE / 2 //Половинка ячейки для того,
-                        val Y =
-                            it.col * TILESIZE + TILESIZE / 2 // чтобы не выходить на другие ячейки - пути
-                        lineTo(X.toFloat(), Y.toFloat()) // moveTo,lineTo - требуют float
+
+                // Рисуем путь только если он не пустой
+                if (path.isNotEmpty()) {
+                    val myPath = Path().apply {
+                        val startX = path.first().row * TILESIZE + TILESIZE / 2
+                        val startY = path.first().col * TILESIZE + TILESIZE / 2
+                        moveTo(startX.toFloat(), startY.toFloat())
+                        path.forEach {
+                            val X = it.row * TILESIZE + TILESIZE / 2
+                            val Y = it.col * TILESIZE + TILESIZE / 2
+                            lineTo(X.toFloat(), Y.toFloat())
+                        }
                     }
+                    drawPath(
+                        path = myPath,
+                        color = Color.Green,
+                        style = Stroke(width = 8f)
+                    )
                 }
-                drawPath(
-                    path = myPath,
-                    color = Color.Green,
-                    style = Stroke(width = 8f)
-                )
             }
-    )
-}
 fun onTileClicked(row:Int, col:Int){
     Log.d("onTileSelectedMessage", "pressed on the " + row + "row and " + col + "column")
 }
