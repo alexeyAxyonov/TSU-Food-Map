@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import MapGrid
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -139,8 +140,8 @@ fun MapView(modifier: Modifier = Modifier) {
                     val originalY = (offset.y - offsetY) / zoom
 
                     // Переводим в номера клеток
-                    val col = (originalX / TILESIZE).toInt()
-                    val row = (originalY / TILESIZE).toInt()
+                    val row = (originalX / TILESIZE).toInt()
+                    val col = (originalY / TILESIZE).toInt()
 
                     // Проверяем, что координаты в пределах карты
                     if (row in 0 until mapGrid.rows && col in 0 until mapGrid.cols) {
@@ -221,6 +222,9 @@ fun MapView(modifier: Modifier = Modifier) {
                     )
                 }
             }
+    )
+}
+            /*
 fun onTileClicked(row:Int, col:Int){
     Log.d("onTileSelectedMessage", "pressed on the " + row + "row and " + col + "column")
 }

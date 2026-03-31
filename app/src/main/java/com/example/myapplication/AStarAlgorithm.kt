@@ -1,4 +1,9 @@
-class Cell (val row: Int, val col: Int, val road: Boolean)
+import android.content.Context
+import com.example.myapplication.R
+import java.io.BufferedReader
+import java.io.InputStreamReader
+
+data class Cell (val row: Int, val col: Int, val road: Boolean)
 
 class MapGrid() {
     lateinit var grid: List<List<Cell>>
