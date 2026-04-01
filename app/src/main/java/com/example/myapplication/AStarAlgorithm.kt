@@ -3,7 +3,7 @@ import com.example.myapplication.R
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-class Cell (val row: Int, val col: Int, val road: Boolean)
+data class Cell (val row: Int, val col: Int, val road: Boolean)
 
 class MapGrid() {
     lateinit var grid: List<List<Cell>>
