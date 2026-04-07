@@ -95,7 +95,6 @@ class MainActivity : ComponentActivity() {
                         ModalDrawerSheet{
                             Column(
                                 modifier = Modifier.padding(horizontal = 16.dp)
-                                .verticalScroll(rememberScrollState())
                             ) {
                                 Spacer(Modifier.height(12.dp))
                                 Text("Навигация", modifier = Modifier.padding(12.dp),
