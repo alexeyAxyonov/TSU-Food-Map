@@ -1,6 +1,4 @@
-package com.example.myapplication.ui
-
-import Cell
+package com.example.myapplication.algorithms
 
 // Определение начальных кластеров - выборка далеких
 // Определение метрики - евклидова
