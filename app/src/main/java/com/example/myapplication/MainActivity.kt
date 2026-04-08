@@ -23,9 +23,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -73,7 +75,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.example.myapplication.ui.components.PLACES
+import com.example.myapplication.ui.components.NavDrawerCustomItem
+import com.example.myapplication.ui.components.DEFAULTNAVITEM
+import com.example.myapplication.utils.addDrawerSlot
+import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -88,33 +93,64 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
-                var navItems by remember { mutableStateOf(PLACES) }
+                var navItems = remember { mutableStateListOf(
+                    DEFAULTNAVITEM, DEFAULTNAVITEM
+                ) }
                 var imageWidth by remember { mutableFloatStateOf(0f) }
                 ModalNavigationDrawer(
+                    drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet{
                             Column(
                                 modifier = Modifier.padding(horizontal = 16.dp)
-                                .verticalScroll(rememberScrollState())
                             ) {
                                 Spacer(Modifier.height(12.dp))
+
                                 Text("Навигация", modifier = Modifier.padding(12.dp),
                                     style = MaterialTheme.typography.titleMedium)
-                                /* Проверить, нужно ли сюда сувать или можно ниже. Или можно убрать
-                                Спейсер и текст
-                                 */
 
                                 HorizontalDivider()
-                                LazyColumn(){
-                                    items(navItems) {item ->
 
+                                LazyColumn(){
+                                    itemsIndexed(navItems) {index, item ->
+                                        NavDrawerCustomItem(
+                                            selectedItem = item,
+                                            onItemSelected = { option ->
+                                                //Log.d("Navigation",
+                                                //    "До обновления: ${navItems[index].title}")
+                                                navItems[index] = option
+                                                //Log.d("Navigation",
+                                                //    "После обновления: ${navItems[index].title}")
+                                            },
+                                            onItemDeleted = {
+                                                //Log.d("Navigation",
+                                                //    "До удаления: ${navItems[index].title}")
+                                                navItems.removeAll { it.id == item.id }
+                                                //Log.d("Navigation",
+                                                //    "После удаления: ${navItems[index].title}")
+                                            }
+                                        )
+                                    }
+                                    item {
+                                        Button(
+                                            onClick = {
+                                                navItems.addDrawerSlot()
+                                            },
+                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.add_24px),
+                                                contentDescription = "Иконка кнопки добавления точки",
+                                                modifier = Modifier.size(ButtonDefaults.IconSize)
+                                            )
+                                            Text(text = "Добавить место")
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                )
-                {
+                ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = {
@@ -124,7 +160,13 @@ class MainActivity : ComponentActivity() {
                                 },
                                 actions = {
                                     IconButton(onClick = {
-                                        Log.d("onIconButtonPress", "IconButton Pressed")
+                                        scope.launch {
+                                            if (drawerState.isClosed) {
+                                                drawerState.open()
+                                            } else {
+                                                drawerState.close()
+                                            }
+                                        }
                                     }){
                                         Icon(
                                             painter =
