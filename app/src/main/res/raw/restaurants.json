@@ -1,0 +1,127 @@
+[
+  {
+    "title": "Абрикос",
+    "coordsX": 8,
+    "coordsY": 4,
+    "type": "shop"
+  },
+
+  {
+  "title" : "Ярче",
+  "coordsX" : 154,
+  "coordsY" : 5,
+  "type" : "shop"
+  },
+
+  {
+  "title" : "Наш гастроном",
+  "coordsX" : 155,
+  "coordsY" : 46,
+  "type" : "shop"
+  },
+
+  {
+  "title" : "Бристоль",
+  "coordsX" : 148,
+  "coordsY" : 66,
+  "type" : "shop"
+  },
+
+  {
+  "title" : "Безумно",
+  "coordsX" : 9,
+  "coordsY" : 4,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Батина Шаурма",
+  "coordsX" : 10,
+  "coordsY" : 13,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Цзисян",
+  "coordsX" : 3,
+  "coordsY" : 60,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Кафе во втором корпусе",
+  "coordsX" : 56,
+  "coordsY" : 64,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Торговый автомат во втором корпусе",
+  "coordsX" : 56,
+  "coordsY" : 63,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Сибирские блины",
+  "coordsX" : 71,
+  "coordsY" : 52,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Столовая №1",
+  "coordsX" : 72,
+  "coordsY" : 52,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Кафе Минутка",
+  "coordsX" : 73,
+  "coordsY" : 52,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Кафе Научка",
+  "coordsX" : 105,
+  "coordsY" : 84,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Rostic's",
+  "coordsX" : 129,
+  "coordsY" : 54,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Вечный зов",
+  "coordsX" : 145,
+  "coordsY" : 12,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Baba Roma",
+  "coordsX" : 127,
+  "coordsY" : 12,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Гербарий",
+  "coordsX" : 130,
+  "coordsY" : 35,
+  "type" : "restaurant"
+  },
+
+  {
+  "title" : "Сыр-Бор",
+  "coordsX" : 66,
+  "coordsY" : 20,
+  "type" : "restaurant"
+  }
+]

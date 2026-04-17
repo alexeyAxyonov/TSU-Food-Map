@@ -1,10 +1,16 @@
 package com.example.myapplication.utils
 
-import com.example.myapplication.ui.components.DEFAULTNAVITEM
+import com.example.myapplication.ui.components.DEFAULTDATANAVITEM
 import com.example.myapplication.ui.components.NavItem
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 fun MutableList<NavItem>.addDrawerSlot() {
-    this.add(DEFAULTNAVITEM)
+    this.add(NavItem(
+        id = Uuid.random(),
+        data = DEFAULTDATANAVITEM
+    ))
 }
 
 fun MutableList<NavItem>.removeDrawerSlot(index: Int) {

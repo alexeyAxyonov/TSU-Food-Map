@@ -56,11 +56,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.myapplication.ui.components.NavDrawerCustomItem
-import com.example.myapplication.ui.components.DEFAULTNAVITEM
+import com.example.myapplication.ui.components.DEFAULTDATANAVITEM
+import com.example.myapplication.ui.components.NavItem
 import com.example.myapplication.utils.addDrawerSlot
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
-
+import com.example.myapplication.ui.components.PlacesData
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -68,13 +70,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        PlacesData.load(this)
         setContent {
             MyApplicationTheme {
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 var navItems = remember { mutableStateListOf(
-                    DEFAULTNAVITEM, DEFAULTNAVITEM
-                ) }
+                    NavItem(
+                        id = Uuid.random(),
+                        data = DEFAULTDATANAVITEM
+                    ),
+                    NavItem(
+                        id = Uuid.random(),
+                        data = DEFAULTDATANAVITEM
+                    )) }
                 var imageWidth by remember { mutableFloatStateOf(0f) }
                 ModalNavigationDrawer(
                     drawerState = drawerState,

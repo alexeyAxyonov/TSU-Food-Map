@@ -1,0 +1,57 @@
+[
+  {
+    "title" : "Геофизический центр Евразии",
+    "coordsX" : 109,
+    "coordsY" : 50,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Памятник павшим за Родину сотрудникам и студентам ТГУ",
+    "coordsX" : 98,
+    "coordsY" : 63,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Скульптурная композиция Каменные Бабы",
+    "coordsX" : 91,
+    "coordsY" : 54,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Профессорам В.М. Флоринскому и Д.И. Менделееву от благодарных сибиряков",
+    "coordsX" : 95,
+    "coordsY" : 54,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Декоративное сооружение Каменные изваяния",
+    "coordsX" : 90,
+    "coordsY" : 39,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Скульптура белки Профессор Белкин",
+    "coordsX" : 92,
+    "coordsY" : 40,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Приёмная комиссия",
+    "coordsX" : 78,
+    "coordsY" : 54,
+    "type" : "attraction"
+  },
+
+  {
+    "title" : "Инсталляция Шахматы",
+    "coordsX" : 106,
+    "coordsY" : 82,
+    "type" : "attraction"
+  }
+]

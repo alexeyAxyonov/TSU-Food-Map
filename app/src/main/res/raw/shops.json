@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Абрикос",
+    "coordsX": 8,
+    "coordsY": 4,
+    "type": "shop"
+  },
+
+  {
+    "title" : "Ярче",
+    "coordsX" : 154,
+    "coordsY" : 5,
+    "type" : "shop"
+  },
+
+  {
+    "title" : "Наш гастроном",
+    "coordsX" : 155,
+    "coordsY" : 46,
+    "type" : "shop"
+  },
+
+  {
+    "title" : "Бристоль",
+    "coordsX" : 148,
+    "coordsY" : 66,
+    "type" : "shop"
+  }
+]
