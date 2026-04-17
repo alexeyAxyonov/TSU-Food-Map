@@ -1,5 +1,8 @@
 package com.example.myapplication
 
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.myapplication.algorithms.MapGrid
 import android.os.Bundle
 import android.util.Log
@@ -62,8 +65,14 @@ import com.example.myapplication.utils.addDrawerSlot
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import com.example.myapplication.ui.components.PlacesData
+import com.example.myapplication.ui.screens.NeuralNetworkScreen
+import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
+@Serializable
+object Home
+@Serializable
+object NeuralNetwork
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalUuidApi::class)
@@ -73,106 +82,141 @@ class MainActivity : ComponentActivity() {
         PlacesData.load(this)
         setContent {
             MyApplicationTheme {
-                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                val scope = rememberCoroutineScope()
-                var navItems = remember { mutableStateListOf(
-                    NavItem(
-                        id = Uuid.random(),
-                        data = DEFAULTDATANAVITEM
-                    ),
-                    NavItem(
-                        id = Uuid.random(),
-                        data = DEFAULTDATANAVITEM
-                    )) }
-                var imageWidth by remember { mutableFloatStateOf(0f) }
-                ModalNavigationDrawer(
-                    drawerState = drawerState,
-                    drawerContent = {
-                        ModalDrawerSheet{
-                            Column(
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            ) {
-                                Spacer(Modifier.height(12.dp))
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = Home) {
+                    composable<Home> {
+                        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                        val scope = rememberCoroutineScope()
+                        var navDataItems = remember {
+                            mutableStateListOf(DEFAULTDATANAVITEM, DEFAULTDATANAVITEM)
+                        }
+                        var navItems = remember {
+                            mutableStateListOf(
+                                NavItem(id = Uuid.random(), data = DEFAULTDATANAVITEM),
+                                NavItem(id = Uuid.random(), data = DEFAULTDATANAVITEM),
+                            )
+                        }
+                        var imageWidth by remember { mutableFloatStateOf(0f) }
+                        ModalNavigationDrawer(
+                            drawerState = drawerState,
+                            drawerContent = {
+                                ModalDrawerSheet {
+                                    Column(
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    ) {
+                                        Spacer(Modifier.height(12.dp))
 
-                                Text("Навигация", modifier = Modifier.padding(12.dp),
-                                    style = MaterialTheme.typography.titleMedium)
-
-                                HorizontalDivider()
-
-                                LazyColumn(){
-                                    itemsIndexed(navItems) {index, item ->
-                                        NavDrawerCustomItem(
-                                            selectedItem = item,
-                                            onItemSelected = { option ->
-                                                //Log.d("Navigation",
-                                                //    "До обновления: ${navItems[index].title}")
-                                                navItems[index] = option
-                                                //Log.d("Navigation",
-                                                //    "После обновления: ${navItems[index].title}")
-                                            },
-                                            onItemDeleted = {
-                                                //Log.d("Navigation",
-                                                //    "До удаления: ${navItems[index].title}")
-                                                navItems.removeAll { it.id == item.id }
-                                                //Log.d("Navigation",
-                                                //    "После удаления: ${navItems[index].title}")
-                                            }
+                                        Text(
+                                            "Навигация", modifier = Modifier.padding(12.dp),
+                                            style = MaterialTheme.typography.titleMedium
                                         )
-                                    }
-                                    item {
-                                        Button(
-                                            onClick = {
-                                                navItems.addDrawerSlot()
-                                            },
-                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.add_24px),
-                                                contentDescription = "Иконка кнопки добавления точки",
-                                                modifier = Modifier.size(ButtonDefaults.IconSize)
-                                            )
-                                            Text(text = "Добавить место")
+
+                                        HorizontalDivider()
+
+                                        LazyColumn() {
+                                            itemsIndexed(navItems) { index, item ->
+                                                NavDrawerCustomItem(
+                                                    selectedItem = item,
+                                                    onItemSelected = { option ->
+                                                        //Log.d("Navigation",
+                                                        //    "До обновления: ${navItems[index].title}")
+                                                        navItems[index] = NavItem(
+                                                            id = Uuid.random(), data = option.data
+                                                        )
+                                                        //Log.d("Navigation",
+                                                        //    "После обновления: ${navItems[index].title}")
+                                                    },
+                                                    onItemDeleted = {
+                                                        //Log.d("Navigation",
+                                                        //    "До удаления: ${navItems[index].title}")
+                                                        navItems.removeAll { it.id == item.id }
+                                                        //Log.d("Navigation",
+                                                        //    "После удаления: ${navItems[index].title}")
+                                                    }
+                                                )
+                                            }
+                                            item {
+                                                Button(
+                                                    onClick = {
+                                                        navItems.addDrawerSlot()
+                                                    },
+                                                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(id = R.drawable.add_24px),
+                                                        contentDescription = "Иконка кнопки добавления точки",
+                                                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                                                    )
+                                                    Text(text = "Добавить место")
+                                                }
+                                            }
+                                            item {
+                                                Button(
+                                                    onClick = {
+                                                        TODO()
+                                                    },
+                                                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+                                                ){
+                                                    Icon(
+                                                        painter = painterResource(id = R.drawable.conversion_path_24px),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                                                    )
+                                                    Text(text = "Показать путь")
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
-                ) {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        topBar = {
-                            TopAppBar(
-                                title = {
-                                    Text("Карта")
-                                },
-                                actions = {
-                                    IconButton(onClick = {
-                                        scope.launch {
-                                            if (drawerState.isClosed) {
-                                                drawerState.open()
-                                            } else {
-                                                drawerState.close()
+                        ) {
+                            Scaffold(
+                                modifier = Modifier.fillMaxSize(),
+                                topBar = {
+                                    TopAppBar(
+                                        title = {
+                                            Text("Карта")
+                                        },
+                                        actions = {
+                                            IconButton(onClick = {
+                                                scope.launch {
+                                                    if (drawerState.isClosed) {
+                                                        drawerState.open()
+                                                    } else {
+                                                        drawerState.close()
+                                                    }
+                                                }
+                                            }) {
+                                                Icon(
+                                                    painter =
+                                                        painterResource(R.drawable.arrow_outward_24px),
+                                                    contentDescription = "Иконка пути"
+                                                )
+                                            }
+                                            IconButton(onClick = {
+                                                navController.navigate(NeuralNetwork)
+                                            }){
+                                                Icon(
+                                                    painter = painterResource(R.drawable.network_intelligence_24px),
+                                                    contentDescription = null
+                                                )
                                             }
                                         }
-                                    }){
-                                        Icon(
-                                            painter =
-                                                painterResource(R.drawable.arrow_outward_24px),
-                                            contentDescription = "Иконка пути"
-                                        )
-                                    }
+                                    )
+                                }) { innerPadding ->
+                                Column() {
+                                    //modifier = Modifier
+                                    MapView(
+                                        modifier = Modifier
+                                            .padding(innerPadding)
+                                            .fillMaxSize()
+                                    )
                                 }
-                            )
-                        }) { innerPadding ->
-                        Column() {
-                            //modifier = Modifier
-                            MapView(
-                                modifier = Modifier
-                                    .padding(innerPadding)
-                                    .fillMaxSize()
-                            ) //.size(1000.dp, 1000.dp))
+                            }
                         }
+                    }
+                    composable<NeuralNetwork>{
+                        NeuralNetworkScreen(navController)
                     }
                 }
             }
