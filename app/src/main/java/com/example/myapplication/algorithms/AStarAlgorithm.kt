@@ -11,6 +11,8 @@ class MapGrid() {
     lateinit var grid: List<List<Cell>>
     var rows: Int = 0
     var cols: Int = 0
+    var isLoaded: Boolean = false
+        private set
 
     fun loadMatrixFromFile(context: Context) {
         val inputStream = context.resources.openRawResource(R.raw.mapmatrix)
@@ -53,6 +55,7 @@ class MapGrid() {
         } else {
             0
         }
+        isLoaded = true
     }
 
     fun isWalkable(row: Int, col: Int):Boolean {
