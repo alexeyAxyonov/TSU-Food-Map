@@ -543,13 +543,14 @@ fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResul
 
 @Composable
 fun ShowClustersButton(modifier : Modifier = Modifier, showClusters: Boolean, onToggle: () -> Unit) {
-
-    Button(
-        modifier = modifier
-            .height(50.dp)
-            .width(60.dp),
+    //var isToggled by remember{ mutableStateOf(false) }
+    IconButton(
         onClick = onToggle) {
-        Text(if (showClusters) "Скрыть кластеры" else "Показать кластеры")
+        Icon(
+            painter = if (!showClusters) painterResource(R.drawable.border_all_24px)
+            else painterResource(R.drawable.border_clear_24px),
+            contentDescription = null
+        )
     }
 }
 @Composable
@@ -558,14 +559,14 @@ fun ShowPathThroughPlacesButton(
         showPath: Boolean,
         onToggle: () -> Unit)
 {
-        Button(
-            modifier = modifier
-                .height(50.dp)
-                .width(80.dp),
-            onClick = onToggle
-        ) {
-            Text(if (showPath) "Скрыть путь" else "Показать путь")
-        }
+    IconButton(
+        onClick = onToggle) {
+        Icon(
+            painter = if (!showPath) painterResource(R.drawable.route_24px)
+            else painterResource(R.drawable.remove_road_24px),
+            contentDescription = null
+        )
+    }
 }
 fun RouteResult.toCells(): List<Cell> {
     return path.map { it.coordinates }
