@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import com.example.myapplication.R
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -70,6 +71,7 @@ import com.example.myapplication.ui.screens.NeuralNetworkScreen
 import com.example.myapplication.ui.screens.TreeScreen
 import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
+import com.example.myapplication.ui.screens.GeneticAlgorithmScreen
 
 @Serializable
 object Home
@@ -79,6 +81,9 @@ object NeuralNetwork
 object SolutionTreeScr
 @Serializable
 object AddTrainingData
+
+@Serializable
+object GeneticAlgorithmRoute
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalUuidApi::class)
@@ -215,6 +220,15 @@ class MainActivity : ComponentActivity() {
                                                     contentDescription = null
                                                 )
                                             }
+
+                                            IconButton(onClick = {
+                                                navController.navigate(GeneticAlgorithmRoute)
+                                            }) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.conversion_path_24px),
+                                                    contentDescription = "Генетический алгоритм"
+                                                )
+                                            }
                                         }
                                     )
                                 }) { innerPadding ->
@@ -237,6 +251,11 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<AddTrainingData>{
                         AddTrainingDataScreen(navController)
+                    }
+                    composable<GeneticAlgorithmRoute> {
+                        com.example.myapplication.ui.screens.GeneticAlgorithmScreen(
+                            onBackClick = { navController.popBackStack() }
+                        )
                     }
                 }
             }
