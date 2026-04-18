@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import AcoRouteSolver
+import RouteResult
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -58,6 +61,13 @@ import com.example.myapplication.ui.theme.MyApplicationTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.Offset
+import com.example.myapplication.algorithms.Cell
+import com.example.myapplication.algorithms.ClusteringResult
+import com.example.myapplication.algorithms.findClusters
+import com.example.myapplication.algorithms.metric
+import com.example.myapplication.algorithms.numberOfCluster
+import com.example.myapplication.ui.RestourantRepository
 import com.example.myapplication.ui.components.NavDrawerCustomItem
 import com.example.myapplication.ui.components.DEFAULTDATANAVITEM
 import com.example.myapplication.ui.components.NavItem
@@ -67,6 +77,10 @@ import kotlin.uuid.ExperimentalUuidApi
 import com.example.myapplication.ui.components.PlacesData
 import com.example.myapplication.ui.screens.NeuralNetworkScreen
 import kotlinx.serialization.Serializable
+import kotlin.math.sqrt
+import kotlin.text.get
+import kotlin.text.toFloat
+import kotlin.times
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -82,6 +96,14 @@ class MainActivity : ComponentActivity() {
         PlacesData.load(this)
         setContent {
             MyApplicationTheme {
+                var clustersRestourants by remember { mutableStateOf<ClusteringResult?>(null)}
+                var showClusters by remember { mutableStateOf(false) }
+                val restaurants = RestourantRepository.restourants
+                val numberOfCluster = 2
+
+                var antPath by remember { mutableStateOf<RouteResult?>(null) }
+                var pathAntResult by remember { mutableStateOf<RouteResult?>(null) }
+                var showPath by remember { mutableStateOf(false) }
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = Home) {
                     composable<Home> {
@@ -201,6 +223,31 @@ class MainActivity : ComponentActivity() {
                                                     contentDescription = null
                                                 )
                                             }
+                                            ShowClustersButton(
+                                                modifier = Modifier,
+                                                showClusters = showClusters,
+                                                onToggle = {
+                                                    showClusters = !showClusters
+                                                    if (showClusters) {
+                                                        val cells = restaurants.map { it.coordinates }
+                                                        clustersRestourants = findClusters(numberOfCluster, cells)
+                                                    }
+                                                }
+                                            )
+                                            ShowPathThroughPlacesButton (
+                                                modifier = Modifier,
+                                                showPath = showPath,
+                                                onToggle = {
+                                                    showPath = !showPath
+
+                                                    if (showPath) {
+                                                        val selected = restaurants.filter { it.coordinates.road }
+
+                                                        val solver = AcoRouteSolver(selected)
+                                                        pathAntResult = solver.solve()
+                                                    }
+                                                }
+                                            )
                                         }
                                     )
                                 }) { innerPadding ->
@@ -209,7 +256,9 @@ class MainActivity : ComponentActivity() {
                                     MapView(
                                         modifier = Modifier
                                             .padding(innerPadding)
-                                            .fillMaxSize()
+                                            .fillMaxSize(),
+                                        clustersRestourants = if (showClusters) clustersRestourants else null,
+                                        pathAnt = if (showPath) pathAntResult?.toCells() else null
                                     )
                                 }
                             }
@@ -226,12 +275,18 @@ class MainActivity : ComponentActivity() {
 
 //@Preview
 @Composable
-fun MapView(modifier: Modifier = Modifier) {
+fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResult? = null,
+            pathAnt: List<Cell>? = null ) {
     //создание индивидуального painter, чтобы при добавлении нового фото не было ошибок при обращении к разным painter со своими именами
     val painterMap = painterResource(R.drawable.tsu_map)
 
+    val mapHeight = painterMap.intrinsicSize.height
     val mapWidth = painterMap.intrinsicSize.width //ширина оригинальной карты не визуальной части, которую видим
-    val TILESIZE = mapWidth/300f //сторона квадратика у размера оригинальной карты
+    //val TILESIZE = mapWidth/160f //сторона квадратика у размера оригинальной карты
+
+    //для муравьиного алгоритма
+    var pathResult by remember { mutableStateOf<RouteResult?>(null) }
+    var showPath by remember { mutableStateOf(false) }
 
     val context = LocalContext.current //чтобы читать файл mapmatrix.txt
     val mapGrid = remember { MapGrid() }//чтобы потом вызывать findPath() для поиска пути
@@ -241,7 +296,14 @@ fun MapView(modifier: Modifier = Modifier) {
         mapGrid.loadMatrixFromFile(context)
         isMapLoaded = true
     }
-
+    var TILESIZEWIDTH by remember { mutableFloatStateOf(0f) }
+    var TILESIZEHEIGHT by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(mapGrid.cols) {
+        if (mapGrid.cols > 0) {
+            TILESIZEWIDTH = mapWidth.toFloat() / mapGrid.cols.toFloat()
+            TILESIZEHEIGHT = mapHeight.toFloat() / mapGrid.rows.toFloat()
+        }
+    }
     var startPoint by remember { mutableStateOf<MapPoint?>(null) }// сохраняет значения между перерисовками экрана
     var targetPoint by remember { mutableStateOf<MapPoint?>(null) }
 
@@ -262,7 +324,7 @@ fun MapView(modifier: Modifier = Modifier) {
     // а начала которую может видеть пользователь(по простому левый верхний экран - точка начало 0px,0px)
     var lastTapX by remember {mutableStateOf(0f)}
     var lastTapY by remember {mutableStateOf(0f)}
-
+    var Xchange = rememberScrollState()
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     Image(
         painter = painterMap,//painterResource(R.drawable.tsu_map),
@@ -277,13 +339,16 @@ fun MapView(modifier: Modifier = Modifier) {
                     lastTapX = offset.x
 
                     // Преобразуем координаты нажатия в координаты на оригинальной карте
-                    val originalX = (offset.x - offsetX) / zoom
-                    val originalY = (offset.y - offsetY) / zoom
+                    val originalX = (offset.x - offsetX) / zoom //+ 80f + 180f
+                    val originalY = (offset.y - offsetY) / zoom //+ 200f
 
                     // Переводим в номера клеток
-                    val row = (originalX / TILESIZE).toInt()
-                    val col = (originalY / TILESIZE).toInt()
+                    val col = (originalX / TILESIZEWIDTH).toInt()
+                    val row = (originalY / TILESIZEHEIGHT).toInt()
 
+                    Log.d("MapView", "mapWidth = $col, mapHeight = $row")
+                    Log.d("MapView", "TILESIZEWIDTH = $TILESIZEWIDTH, TILESIZEHEIGHT = $TILESIZEHEIGHT")
+                    Log.d("MapView", "path points: ${path.map { "(${it.row},${it.col})" }}")
                     // Проверяем, что координаты в пределах карты
                     if (row in 0 until mapGrid.rows && col in 0 until mapGrid.cols) {
                         // координаты корректны — обрабатываем
@@ -343,17 +408,87 @@ fun MapView(modifier: Modifier = Modifier) {
             //создание холста
             .drawWithContent {
                 drawContent()
+                //рисуем обход по всем достопримечательностям
+                pathAnt?.let { pathAnt ->
+                    if (pathAnt.isNotEmpty()) {
 
+                        val myPathAnt = Path().apply {
+                            val startX = pathAnt.first().col * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                            val startY = pathAnt.first().row * TILESIZEHEIGHT + TILESIZEHEIGHT / 2
+
+                            moveTo(startX, startY)
+
+                            pathAnt.forEach { r ->
+                                val x = r.col * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                                val y = r.row * TILESIZEHEIGHT + TILESIZEHEIGHT / 2
+
+                                lineTo(x, y) //
+                            }
+                        }
+
+                        drawPath(
+                            path = myPathAnt,
+                            color = Color.Green,
+                            style = Stroke(width = 6f),
+                            alpha = 0.35f
+                        )
+
+                        // точки поверх
+                        pathAnt.forEachIndexed { index, r ->
+                            val x = r.col * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                            val y = r.row * TILESIZEHEIGHT + TILESIZEHEIGHT / 2
+
+                            drawCircle(
+                                color = if (index == 0) Color.Yellow else Color.Blue,
+                                radius = TILESIZEWIDTH / 3f,
+                                center = Offset(x, y)
+                            )
+                        }
+                    }
+                }
+                // рисуем кластеры
+                val colors =
+                    listOf(Color.Blue, Color.Cyan, Color.Yellow, Color.White)
+                // Рисуем кластеры
+                clustersRestourants?.let { allowedClusters ->
+                    allowedClusters.clusters.forEachIndexed { index, cluster ->
+                        val color = colors[index]
+                        cluster.forEach { cell ->
+                            val x = cell.row * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                            val y = cell.col * TILESIZEWIDTH + TILESIZEWIDTH / 2
+
+                            drawCircle(
+                                color = color.copy(alpha = 0.7f),
+                                radius = TILESIZEWIDTH / 2f,
+                                center = Offset(x.toFloat(), y.toFloat())
+                            )
+                        }
+                        val radiusCentroid = cluster.maxOf { cell ->
+                            metric(cell, allowedClusters.centroids[index]).toFloat()
+                        }
+                        // Отрисовка всей области одного кластера
+                        val centroidCoordX =
+                            allowedClusters.centroids[index].row.toFloat() * TILESIZEWIDTH
+                        val centroidCoordY =
+                            allowedClusters.centroids[index].col.toFloat() * TILESIZEWIDTH
+                        drawCircle(
+                            color = color.copy(alpha = 0.09f),
+                            radius = sqrt(radiusCentroid) * TILESIZEWIDTH,
+                            center = Offset(centroidCoordX, centroidCoordY),
+                            // style = Stroke(width = 4f)
+                        )
+                    }
+                }
                 // Рисуем путь только если он не пустой
                 if (path.isNotEmpty()) {
                     val myPath = Path().apply {
-                        val startX = path.first().row * TILESIZE + TILESIZE / 2
-                        val startY = path.first().col * TILESIZE + TILESIZE / 2
-                        moveTo(startX.toFloat(), startY.toFloat())
+                        val startX = path.first().col * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                        val startY = path.first().row * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                        moveTo(startX.toFloat()  +300f, startY.toFloat()+100f)
                         path.forEach {
-                            val X = it.row * TILESIZE + TILESIZE / 2
-                            val Y = it.col * TILESIZE + TILESIZE / 2
-                            lineTo(X.toFloat(), Y.toFloat())
+                            val X = it.col * TILESIZEWIDTH + TILESIZEWIDTH / 2
+                            val Y = it.row * TILESIZEHEIGHT + TILESIZEHEIGHT / 2
+                            lineTo(X.toFloat() + 220f , Y.toFloat() +100f)
                         }
                     }
                     drawPath(
@@ -365,6 +500,38 @@ fun MapView(modifier: Modifier = Modifier) {
             }
     )
 }
+
+
+@Composable
+fun ShowClustersButton(modifier : Modifier = Modifier, showClusters: Boolean, onToggle: () -> Unit) {
+
+    Button(
+        modifier = modifier
+            .height(50.dp)
+            .width(60.dp),
+        onClick = onToggle) {
+        Text(if (showClusters) "Скрыть кластеры" else "Показать кластеры")
+    }
+}
+@Composable
+fun ShowPathThroughPlacesButton(
+        modifier: Modifier = Modifier,
+        showPath: Boolean,
+        onToggle: () -> Unit)
+{
+        Button(
+            modifier = modifier
+                .height(50.dp)
+                .width(80.dp),
+            onClick = onToggle
+        ) {
+            Text(if (showPath) "Скрыть путь" else "Показать путь")
+        }
+}
+fun RouteResult.toCells(): List<Cell> {
+    return path.map { it.coordinates }
+}
+
             /*
 fun onTileClicked(row:Int, col:Int){
     Log.d("onTileSelectedMessage", "pressed on the " + row + "row and " + col + "column")
