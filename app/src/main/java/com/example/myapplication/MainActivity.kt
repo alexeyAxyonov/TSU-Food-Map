@@ -65,7 +65,9 @@ import com.example.myapplication.utils.addDrawerSlot
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import com.example.myapplication.ui.components.PlacesData
+import com.example.myapplication.ui.screens.AddTrainingDataScreen
 import com.example.myapplication.ui.screens.NeuralNetworkScreen
+import com.example.myapplication.ui.screens.TreeScreen
 import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
@@ -73,6 +75,10 @@ import kotlin.uuid.Uuid
 object Home
 @Serializable
 object NeuralNetwork
+@Serializable
+object SolutionTreeScr
+@Serializable
+object AddTrainingData
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalUuidApi::class)
@@ -201,6 +207,14 @@ class MainActivity : ComponentActivity() {
                                                     contentDescription = null
                                                 )
                                             }
+                                            IconButton(onClick = {
+                                                navController.navigate(SolutionTreeScr)
+                                            }){
+                                                Icon(
+                                                    painter = painterResource(R.drawable.flowchart_24px),
+                                                    contentDescription = null
+                                                )
+                                            }
                                         }
                                     )
                                 }) { innerPadding ->
@@ -217,6 +231,12 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NeuralNetwork>{
                         NeuralNetworkScreen(navController)
+                    }
+                    composable<SolutionTreeScr>{
+                        TreeScreen(navController)
+                    }
+                    composable<AddTrainingData>{
+                        AddTrainingDataScreen(navController)
                     }
                 }
             }
