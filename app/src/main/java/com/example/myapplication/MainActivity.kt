@@ -67,7 +67,6 @@ import com.example.myapplication.algorithms.Cell
 import com.example.myapplication.algorithms.ClusteringResult
 import com.example.myapplication.algorithms.findClusters
 import com.example.myapplication.algorithms.metric
-import com.example.myapplication.algorithms.numberOfCluster
 import com.example.myapplication.ui.RestourantRepository
 import com.example.myapplication.ui.components.NavDrawerCustomItem
 import com.example.myapplication.ui.components.DEFAULTDATANAVITEM
@@ -110,7 +109,7 @@ class MainActivity : ComponentActivity() {
                 var clustersRestourants by remember { mutableStateOf<ClusteringResult?>(null)}
                 var showClusters by remember { mutableStateOf(false) }
                 val restaurants = RestourantRepository.restourants
-                val numberOfCluster = 2
+                val numberOfCluster = 4
 
                 var antPath by remember { mutableStateOf<RouteResult?>(null) }
                 var pathAntResult by remember { mutableStateOf<RouteResult?>(null) }
@@ -321,7 +320,6 @@ fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResul
 
     val mapHeight = painterMap.intrinsicSize.height
     val mapWidth = painterMap.intrinsicSize.width //ширина оригинальной карты не визуальной части, которую видим
-    //val TILESIZE = mapWidth/160f //сторона квадратика у размера оригинальной карты
 
     //для муравьиного алгоритма
     var pathResult by remember { mutableStateOf<RouteResult?>(null) }
@@ -349,13 +347,10 @@ fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResul
     //создание отслеживающего списка координат пути
     var path by remember {mutableStateOf<List<MapPoint>>(emptyList())}
 
-    //var imageWidth by remember {mutableFloatStateOf(0f)}
-    //val TILESIZE = imageWidth / 300f
-
     //создание отслеживающих переменных который будут показывать смещенение и зум и вращение
     var offsetX by remember {mutableStateOf(0f)}
     var offsetY by remember {mutableStateOf(0f)}
-    var zoom by remember {mutableStateOf(1.2f)}
+    var zoom by remember {mutableStateOf(1f)}
     var rotationAngle by remember {mutableStateOf(0f)}
 
     //создание отслеживающих переменных которые будут показывать координаты последнего нажатия на
@@ -363,8 +358,6 @@ fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResul
     // а начала которую может видеть пользователь(по простому левый верхний экран - точка начало 0px,0px)
     var lastTapX by remember {mutableStateOf(0f)}
     var lastTapY by remember {mutableStateOf(0f)}
-    var Xchange = rememberScrollState()
-    var containerSize by remember { mutableStateOf(IntSize.Zero) }
     Image(
         painter = painterMap,//painterResource(R.drawable.tsu_map),
         contentDescription = "Карта",
@@ -497,7 +490,7 @@ fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResul
                             val y = cell.col * TILESIZEWIDTH + TILESIZEWIDTH / 2
 
                             drawCircle(
-                                color = color.copy(alpha = 0.7f),
+                                color = color.copy(alpha = 0.5f),
                                 radius = TILESIZEWIDTH / 2f,
                                 center = Offset(x.toFloat(), y.toFloat())
                             )
@@ -511,7 +504,7 @@ fun MapView(modifier: Modifier = Modifier, clustersRestourants : ClusteringResul
                         val centroidCoordY =
                             allowedClusters.centroids[index].col.toFloat() * TILESIZEWIDTH
                         drawCircle(
-                            color = color.copy(alpha = 0.09f),
+                            color = color.copy(alpha = 0.16f),
                             radius = sqrt(radiusCentroid) * TILESIZEWIDTH,
                             center = Offset(centroidCoordX, centroidCoordY),
                             // style = Stroke(width = 4f)
