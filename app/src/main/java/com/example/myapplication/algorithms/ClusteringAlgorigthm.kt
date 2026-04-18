@@ -26,8 +26,7 @@ fun metric(point : Cell, centroid : Cell) : Int {
             (point.col - centroid.col) * (point.col - centroid.col)
 }
 
-val numberOfCluster : Int = 6
-val points = Cell(5,3, true)
+
 
 fun findClusters (numberOfCluster : Int, points : List<Cell>) : ClusteringResult
 {
