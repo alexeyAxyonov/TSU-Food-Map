@@ -76,7 +76,9 @@ import com.example.myapplication.utils.addDrawerSlot
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import com.example.myapplication.ui.components.PlacesData
+import com.example.myapplication.ui.screens.AddTrainingDataScreen
 import com.example.myapplication.ui.screens.NeuralNetworkScreen
+import com.example.myapplication.ui.screens.TreeScreen
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
 import kotlin.text.get
@@ -89,6 +91,10 @@ import com.example.myapplication.ui.screens.GeneticAlgorithmScreen
 object Home
 @Serializable
 object NeuralNetwork
+@Serializable
+object SolutionTreeScr
+@Serializable
+object AddTrainingData
 
 @Serializable
 object GeneticAlgorithmRoute
@@ -228,6 +234,14 @@ class MainActivity : ComponentActivity() {
                                                     contentDescription = null
                                                 )
                                             }
+                                            IconButton(onClick = {
+                                                navController.navigate(SolutionTreeScr)
+                                            }){
+                                                Icon(
+                                                    painter = painterResource(R.drawable.flowchart_24px),
+                                                    contentDescription = null
+                                                )
+                                            }
 
                                             IconButton(onClick = {
                                                 navController.navigate(GeneticAlgorithmRoute)
@@ -280,6 +294,12 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NeuralNetwork>{
                         NeuralNetworkScreen(navController)
+                    }
+                    composable<SolutionTreeScr>{
+                        TreeScreen(navController)
+                    }
+                    composable<AddTrainingData>{
+                        AddTrainingDataScreen(navController)
                     }
                     composable<GeneticAlgorithmRoute> {
                         com.example.myapplication.ui.screens.GeneticAlgorithmScreen(

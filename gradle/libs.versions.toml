@@ -11,6 +11,7 @@ composeBom = "2026.03.01"
 zoomimageCompose = "1.4.0"
 foundationLayout = "1.10.6"
 gson = "2.13.2"
+material3 = "1.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +32,7 @@ zoomimage-compose = { module = "io.github.panpf.zoomimage:zoomimage-compose", ve
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
